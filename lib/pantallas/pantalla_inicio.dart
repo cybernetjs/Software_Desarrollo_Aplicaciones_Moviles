@@ -1,94 +1,200 @@
 import 'package:flutter/material.dart';
 
+import '../controladores/controlador_analisis.dart';
+import '../modelos/nivel_riesgo.dart';
 import '../tema/colores.dart';
 import '../tema/tema_aplicacion.dart';
 import '../widgets/encabezado_pantalla.dart';
 import '../widgets/escudo_estado.dart';
 import '../widgets/tarjeta_informacion.dart';
 
-class PantallaInicio extends StatelessWidget {
-  const PantallaInicio({super.key});
+typedef _DescripcionEstado = ({
+  Color color,
+  IconData icono,
+  String titulo,
+  String subtitulo,
+});
 
-  void _mostrarAviso(BuildContext context) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(content: Text('El análisis estará disponible muy pronto')),
-      );
+class PantallaInicio extends StatelessWidget {
+  const PantallaInicio({
+    super.key,
+    required this.controlador,
+    required this.alVerResultados,
+  });
+
+  final ControladorAnalisis controlador;
+  final VoidCallback alVerResultados;
+
+  _DescripcionEstado _describirEstado() {
+    switch (controlador.estado) {
+      case EstadoAnalisis.inactivo:
+        return (
+          color: Colores.primarioClaro,
+          icono: Icons.shield_outlined,
+          titulo: 'Listo para analizar',
+          subtitulo: 'Revisa las aplicaciones instaladas en tu dispositivo',
+        );
+      case EstadoAnalisis.analizando:
+        return (
+          color: Colores.primarioClaro,
+          icono: Icons.shield_outlined,
+          titulo: 'Analizando',
+          subtitulo: 'Revisando permisos y comportamiento de las aplicaciones',
+        );
+      case EstadoAnalisis.error:
+        return (
+          color: Colores.advertencia,
+          icono: Icons.error_outline,
+          titulo: 'No se pudo analizar',
+          subtitulo: controlador.mensajeError ?? 'Intenta nuevamente',
+        );
+      case EstadoAnalisis.completado:
+        return _describirResultado();
+    }
+  }
+
+  _DescripcionEstado _describirResultado() {
+    final porRevisar = controlador.totalPorRevisar;
+    switch (controlador.nivelGeneral) {
+      case NivelRiesgo.bajo:
+        return (
+          color: Colores.seguro,
+          icono: Icons.verified_user,
+          titulo: 'Sin riesgos detectados',
+          subtitulo: 'Se analizaron ${controlador.resultados.length} aplicaciones',
+        );
+      case NivelRiesgo.medio:
+        return (
+          color: Colores.advertencia,
+          icono: Icons.warning_amber_rounded,
+          titulo: 'Hay aplicaciones por revisar',
+          subtitulo: '$porRevisar aplicaciones requieren tu atención',
+        );
+      case NivelRiesgo.alto:
+        return (
+          color: Colores.peligro,
+          icono: Icons.gpp_bad,
+          titulo: 'Se detectaron riesgos altos',
+          subtitulo: '$porRevisar aplicaciones requieren tu atención',
+        );
+    }
+  }
+
+  String _formatearFecha(DateTime? fecha) {
+    if (fecha == null) return 'Nunca';
+    final dia = fecha.day.toString().padLeft(2, '0');
+    final mes = fecha.month.toString().padLeft(2, '0');
+    final hora = fecha.hour.toString().padLeft(2, '0');
+    final minuto = fecha.minute.toString().padLeft(2, '0');
+    return '$dia/$mes $hora:$minuto';
+  }
+
+  String _textoBoton(bool analizando, bool completado) {
+    if (analizando) return 'Analizando...';
+    if (completado) return 'Analizar de nuevo';
+    return 'Analizar ahora';
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-      children: [
-        const EncabezadoPantalla(
-          titulo: 'Antivirus',
-          subtitulo: 'Protección de tu dispositivo',
-        ),
-        const SizedBox(height: 20),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-          decoration: TemaAplicacion.decoracionTarjeta,
-          child: const Column(
-            children: [
-              EscudoEstado(
-                color: Colores.primarioClaro,
-                icono: Icons.shield_outlined,
-              ),
-              SizedBox(height: 20),
-              Text(
-                'Listo para analizar',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: Colores.textoPrincipal,
-                ),
-              ),
-              SizedBox(height: 6),
-              Text(
-                'Revisa las aplicaciones instaladas en tu dispositivo',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colores.textoSecundario),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        FilledButton(
-          onPressed: () => _mostrarAviso(context),
-          child: const Text('Analizar ahora'),
-        ),
-        const SizedBox(height: 16),
-        const TarjetaInformacion(
-          titulo: 'Resumen',
-          filas: [
-            FilaInformacion('Última revisión', 'Nunca'),
-            FilaInformacion('Aplicaciones analizadas', '0'),
-            FilaInformacion('Riesgos detectados', '0'),
-          ],
-        ),
-        const SizedBox(height: 12),
-        const Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return ListenableBuilder(
+      listenable: controlador,
+      builder: (context, _) {
+        final estado = _describirEstado();
+        final analizando = controlador.estado == EstadoAnalisis.analizando;
+        final completado = controlador.estado == EstadoAnalisis.completado;
+
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
           children: [
-            Expanded(
-              child: TarjetaInformacion(
-                titulo: 'Archivos',
-                filas: [FilaInformacion('Estado', 'Pendiente')],
+            const EncabezadoPantalla(
+              titulo: 'Antivirus',
+              subtitulo: 'Protección de tu dispositivo',
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+              decoration: TemaAplicacion.decoracionTarjeta,
+              child: Column(
+                children: [
+                  EscudoEstado(
+                    color: estado.color,
+                    icono: estado.icono,
+                    analizando: analizando,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    estado.titulo,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Colores.textoPrincipal,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    estado.subtitulo,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colores.textoSecundario,
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(width: 12),
-            Expanded(
-              child: TarjetaInformacion(
-                titulo: 'Navegación',
-                filas: [FilaInformacion('Estado', 'Pendiente')],
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: analizando ? null : controlador.analizar,
+              child: Text(_textoBoton(analizando, completado)),
+            ),
+            if (completado)
+              TextButton(
+                onPressed: alVerResultados,
+                child: const Text('Ver resultados'),
               ),
+            const SizedBox(height: 16),
+            TarjetaInformacion(
+              titulo: 'Resumen',
+              filas: [
+                FilaInformacion(
+                  'Última revisión',
+                  _formatearFecha(controlador.ultimaRevision),
+                ),
+                FilaInformacion(
+                  'Aplicaciones analizadas',
+                  '${controlador.resultados.length}',
+                ),
+                FilaInformacion(
+                  'Riesgos detectados',
+                  '${controlador.totalPorRevisar}',
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TarjetaInformacion(
+                    titulo: 'Archivos',
+                    filas: [FilaInformacion('Estado', 'Pendiente')],
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: TarjetaInformacion(
+                    titulo: 'Navegación',
+                    filas: [FilaInformacion('Estado', 'Pendiente')],
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 }
