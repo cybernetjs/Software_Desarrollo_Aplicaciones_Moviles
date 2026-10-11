@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'pantallas/pantalla_inicio.dart';
+import 'pantallas/pantalla_principal.dart';
 import 'tema/tema_aplicacion.dart';
 
 class Aplicacion extends StatelessWidget {
@@ -12,7 +12,7 @@ class Aplicacion extends StatelessWidget {
       title: 'Antivirus',
       debugShowCheckedModeBanner: false,
       theme: TemaAplicacion.oscuro,
-      home: const PantallaInicio(),
+      home: const PantallaPrincipal(),
     );
   }
 }
