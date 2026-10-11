@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../controladores/controlador_analisis.dart';
 import '../controladores/controlador_dispositivo.dart';
+import '../controladores/controlador_wifi.dart';
 import 'pantalla_aplicaciones.dart';
 import 'pantalla_dispositivo.dart';
 import 'pantalla_inicio.dart';
+import 'pantalla_wifi.dart';
 
 class PantallaPrincipal extends StatefulWidget {
   const PantallaPrincipal({super.key});
@@ -16,6 +18,7 @@ class PantallaPrincipal extends StatefulWidget {
 class _EstadoPantallaPrincipal extends State<PantallaPrincipal> {
   late final ControladorAnalisis _controladorAnalisis;
   late final ControladorDispositivo _controladorDispositivo;
+  late final ControladorWifi _controladorWifi;
   int _indiceActual = 0;
 
   @override
@@ -23,12 +26,14 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal> {
     super.initState();
     _controladorAnalisis = ControladorAnalisis();
     _controladorDispositivo = ControladorDispositivo()..revisar();
+    _controladorWifi = ControladorWifi();
   }
 
   @override
   void dispose() {
     _controladorAnalisis.dispose();
     _controladorDispositivo.dispose();
+    _controladorWifi.dispose();
     super.dispose();
   }
 
@@ -50,6 +55,7 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal> {
             ),
             PantallaAplicaciones(controlador: _controladorAnalisis),
             PantallaDispositivo(controlador: _controladorDispositivo),
+            PantallaWifi(controlador: _controladorWifi),
           ],
         ),
       ),
@@ -67,6 +73,7 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal> {
             icon: Icon(Icons.phone_android),
             label: 'Dispositivo',
           ),
+          BottomNavigationBarItem(icon: Icon(Icons.wifi), label: 'WiFi'),
         ],
       ),
     );

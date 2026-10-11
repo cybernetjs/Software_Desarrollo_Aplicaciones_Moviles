@@ -1,5 +1,6 @@
 package com.example.sistema_tarea
 
+import android.Manifest
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
@@ -9,6 +10,8 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -18,6 +21,8 @@ import java.util.concurrent.Executors
 class MainActivity : FlutterActivity() {
     private val canalAplicaciones = "antivirus/aplicaciones"
     private val canalDispositivo = "antivirus/dispositivo"
+    private val canalWifi = "antivirus/wifi"
+    private val codigoPermisoUbicacion = 4101
     private val permisoAccesibilidad = "android.permission.BIND_ACCESSIBILITY_SERVICE"
     private val permisoAdministrador = "android.permission.BIND_DEVICE_ADMIN"
     private val rutasSu = listOf(
@@ -30,11 +35,28 @@ class MainActivity : FlutterActivity() {
     )
     private val hiloSecundario = Executors.newSingleThreadExecutor()
     private val hiloPrincipal = Handler(Looper.getMainLooper())
+    private val escanerWifi by lazy { EscanerWifi(this) }
+    private var resultadoPermiso: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         registrarCanalAplicaciones(flutterEngine)
         registrarCanalDispositivo(flutterEngine)
+        registrarCanalWifi(flutterEngine)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != codigoPermisoUbicacion) return
+
+        val concedido = grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        resultadoPermiso?.success(concedido)
+        resultadoPermiso = null
     }
 
     private fun registrarCanalAplicaciones(motor: FlutterEngine) {
@@ -68,6 +90,48 @@ class MainActivity : FlutterActivity() {
                     else -> resultado.notImplemented()
                 }
             }
+    }
+
+    private fun registrarCanalWifi(motor: FlutterEngine) {
+        MethodChannel(motor.dartExecutor.binaryMessenger, canalWifi)
+            .setMethodCallHandler { llamada, resultado ->
+                when (llamada.method) {
+                    "solicitarPermisoUbicacion" -> solicitarPermisoUbicacion(resultado)
+                    "escanearRedes" -> escanearRedes(resultado)
+                    else -> resultado.notImplemented()
+                }
+            }
+    }
+
+    private fun tienePermisoUbicacion(): Boolean =
+        ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+    private fun solicitarPermisoUbicacion(resultado: MethodChannel.Result) {
+        if (tienePermisoUbicacion()) {
+            resultado.success(true)
+            return
+        }
+        if (resultadoPermiso != null) {
+            resultado.success(false)
+            return
+        }
+        resultadoPermiso = resultado
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+            codigoPermisoUbicacion
+        )
+    }
+
+    private fun escanearRedes(resultado: MethodChannel.Result) {
+        if (!tienePermisoUbicacion()) {
+            resultado.error("SIN_PERMISO", "Falta el permiso de ubicación.", null)
+            return
+        }
+        escanerWifi.escanear { respuesta -> resultado.success(respuesta) }
     }
 
     private fun obtenerEstadoDispositivo(): Map<String, Any?> {
