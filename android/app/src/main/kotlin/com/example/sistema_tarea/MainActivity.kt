@@ -3,6 +3,7 @@ package com.example.sistema_tarea
 import android.Manifest
 import android.app.KeyguardManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
@@ -36,6 +37,7 @@ class MainActivity : FlutterActivity() {
     private val hiloSecundario = Executors.newSingleThreadExecutor()
     private val hiloPrincipal = Handler(Looper.getMainLooper())
     private val escanerWifi by lazy { EscanerWifi(this) }
+    private val gestorFirewall by lazy { GestorFirewall(this) }
     private var resultadoPermiso: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -43,6 +45,13 @@ class MainActivity : FlutterActivity() {
         registrarCanalAplicaciones(flutterEngine)
         registrarCanalDispositivo(flutterEngine)
         registrarCanalWifi(flutterEngine)
+        gestorFirewall.registrar(flutterEngine)
+    }
+
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        gestorFirewall.procesarResultadoActividad(requestCode, resultCode)
     }
 
     override fun onRequestPermissionsResult(

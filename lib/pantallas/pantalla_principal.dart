@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../controladores/controlador_analisis.dart';
 import '../controladores/controlador_dispositivo.dart';
+import '../controladores/controlador_firewall.dart';
 import '../controladores/controlador_wifi.dart';
 import 'pantalla_aplicaciones.dart';
 import 'pantalla_dispositivo.dart';
+import 'pantalla_firewall.dart';
 import 'pantalla_inicio.dart';
 import 'pantalla_wifi.dart';
 
@@ -19,6 +21,7 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal> {
   late final ControladorAnalisis _controladorAnalisis;
   late final ControladorDispositivo _controladorDispositivo;
   late final ControladorWifi _controladorWifi;
+  late final ControladorFirewall _controladorFirewall;
   int _indiceActual = 0;
 
   @override
@@ -27,6 +30,7 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal> {
     _controladorAnalisis = ControladorAnalisis();
     _controladorDispositivo = ControladorDispositivo()..revisar();
     _controladorWifi = ControladorWifi();
+    _controladorFirewall = ControladorFirewall()..cargar();
   }
 
   @override
@@ -34,6 +38,7 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal> {
     _controladorAnalisis.dispose();
     _controladorDispositivo.dispose();
     _controladorWifi.dispose();
+    _controladorFirewall.dispose();
     super.dispose();
   }
 
@@ -56,6 +61,7 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal> {
             PantallaAplicaciones(controlador: _controladorAnalisis),
             PantallaDispositivo(controlador: _controladorDispositivo),
             PantallaWifi(controlador: _controladorWifi),
+            PantallaFirewall(controlador: _controladorFirewall),
           ],
         ),
       ),
@@ -68,12 +74,16 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal> {
             activeIcon: Icon(Icons.shield),
             label: 'Inicio',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.apps), label: 'Aplicaciones'),
+          BottomNavigationBarItem(icon: Icon(Icons.apps), label: 'Apps'),
           BottomNavigationBarItem(
             icon: Icon(Icons.phone_android),
-            label: 'Dispositivo',
+            label: 'Equipo',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.wifi), label: 'WiFi'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_fire_department),
+            label: 'Firewall',
+          ),
         ],
       ),
     );
