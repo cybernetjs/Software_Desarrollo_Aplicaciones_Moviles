@@ -1,26 +1,44 @@
 package com.example.sistema_tarea
 
+import android.app.KeyguardManager
+import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
 import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
-    private val nombreCanal = "antivirus/aplicaciones"
+    private val canalAplicaciones = "antivirus/aplicaciones"
+    private val canalDispositivo = "antivirus/dispositivo"
     private val permisoAccesibilidad = "android.permission.BIND_ACCESSIBILITY_SERVICE"
     private val permisoAdministrador = "android.permission.BIND_DEVICE_ADMIN"
+    private val rutasSu = listOf(
+        "/system/bin/su",
+        "/system/xbin/su",
+        "/sbin/su",
+        "/system/app/Superuser.apk",
+        "/data/local/bin/su",
+        "/data/local/xbin/su"
+    )
     private val hiloSecundario = Executors.newSingleThreadExecutor()
     private val hiloPrincipal = Handler(Looper.getMainLooper())
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, nombreCanal)
+        registrarCanalAplicaciones(flutterEngine)
+        registrarCanalDispositivo(flutterEngine)
+    }
+
+    private fun registrarCanalAplicaciones(motor: FlutterEngine) {
+        MethodChannel(motor.dartExecutor.binaryMessenger, canalAplicaciones)
             .setMethodCallHandler { llamada, resultado ->
                 when (llamada.method) {
                     "obtenerAplicaciones" -> hiloSecundario.execute {
@@ -37,6 +55,53 @@ class MainActivity : FlutterActivity() {
                 }
             }
     }
+
+    private fun registrarCanalDispositivo(motor: FlutterEngine) {
+        MethodChannel(motor.dartExecutor.binaryMessenger, canalDispositivo)
+            .setMethodCallHandler { llamada, resultado ->
+                when (llamada.method) {
+                    "obtenerEstadoDispositivo" -> try {
+                        resultado.success(obtenerEstadoDispositivo())
+                    } catch (error: Exception) {
+                        resultado.error("ERROR_DISPOSITIVO", error.message, null)
+                    }
+                    else -> resultado.notImplemented()
+                }
+            }
+    }
+
+    private fun obtenerEstadoDispositivo(): Map<String, Any?> {
+        return mapOf(
+            "versionAndroid" to Build.VERSION.RELEASE,
+            "parcheSeguridad" to obtenerParcheSeguridad(),
+            "bloqueoPantalla" to tieneBloqueoPantalla(),
+            "depuracionUsb" to ajusteGlobalActivo(Settings.Global.ADB_ENABLED),
+            "opcionesDesarrollador" to
+                ajusteGlobalActivo(Settings.Global.DEVELOPMENT_SETTINGS_ENABLED),
+            "dispositivoRoot" to detectarRoot()
+        )
+    }
+
+    private fun obtenerParcheSeguridad(): String? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Build.VERSION.SECURITY_PATCH
+        } else {
+            null
+        }
+
+    private fun tieneBloqueoPantalla(): Boolean {
+        val gestor = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            gestor.isDeviceSecure
+        } else {
+            gestor.isKeyguardSecure
+        }
+    }
+
+    private fun ajusteGlobalActivo(nombre: String): Boolean =
+        Settings.Global.getInt(contentResolver, nombre, 0) == 1
+
+    private fun detectarRoot(): Boolean = rutasSu.any { File(it).exists() }
 
     @Suppress("DEPRECATION")
     private fun obtenerAplicaciones(): List<Map<String, Any?>> {

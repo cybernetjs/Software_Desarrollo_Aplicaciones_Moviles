@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../controladores/controlador_analisis.dart';
+import '../controladores/controlador_dispositivo.dart';
 import 'pantalla_aplicaciones.dart';
 import 'pantalla_dispositivo.dart';
 import 'pantalla_inicio.dart';
@@ -13,18 +14,21 @@ class PantallaPrincipal extends StatefulWidget {
 }
 
 class _EstadoPantallaPrincipal extends State<PantallaPrincipal> {
-  late final ControladorAnalisis _controlador;
+  late final ControladorAnalisis _controladorAnalisis;
+  late final ControladorDispositivo _controladorDispositivo;
   int _indiceActual = 0;
 
   @override
   void initState() {
     super.initState();
-    _controlador = ControladorAnalisis();
+    _controladorAnalisis = ControladorAnalisis();
+    _controladorDispositivo = ControladorDispositivo()..revisar();
   }
 
   @override
   void dispose() {
-    _controlador.dispose();
+    _controladorAnalisis.dispose();
+    _controladorDispositivo.dispose();
     super.dispose();
   }
 
@@ -41,11 +45,11 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal> {
           index: _indiceActual,
           children: [
             PantallaInicio(
-              controlador: _controlador,
+              controlador: _controladorAnalisis,
               alVerResultados: _irAAplicaciones,
             ),
-            PantallaAplicaciones(controlador: _controlador),
-            const PantallaDispositivo(),
+            PantallaAplicaciones(controlador: _controladorAnalisis),
+            PantallaDispositivo(controlador: _controladorDispositivo),
           ],
         ),
       ),

@@ -1,4 +1,5 @@
 import 'aplicacion_instalada.dart';
+import 'motivo_riesgo.dart';
 import 'nivel_riesgo.dart';
 
 class ResultadoAnalisis {
@@ -12,5 +13,5 @@ class ResultadoAnalisis {
   final AplicacionInstalada aplicacion;
   final int puntos;
   final NivelRiesgo nivel;
-  final List<String> motivos;
+  final List<MotivoRiesgo> motivos;
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../tema/colores.dart';
+
 class EscudoEstado extends StatelessWidget {
   const EscudoEstado({
     super.key,
@@ -25,17 +27,17 @@ class EscudoEstado extends StatelessWidget {
           SizedBox.expand(
             child: CircularProgressIndicator(
               value: analizando ? null : 1,
-              strokeWidth: 5,
+              strokeWidth: 6,
               color: color,
-              backgroundColor: color.withAlpha(40),
+              backgroundColor: Colores.superficieElevada,
             ),
           ),
           Container(
             width: tamano * 0.78,
             height: tamano * 0.78,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: color.withAlpha(28),
+              color: Colores.superficieElevada,
             ),
             child: Icon(icono, size: tamano * 0.4, color: color),
           ),
