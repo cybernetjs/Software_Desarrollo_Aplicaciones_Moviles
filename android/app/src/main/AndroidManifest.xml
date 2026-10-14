@@ -3,6 +3,8 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="sistema_tarea"
         android:name="${applicationName}"
@@ -33,6 +35,10 @@
                 <action android:name="android.net.VpnService"/>
             </intent-filter>
         </service>
+        <service
+            android:name=".ServicioVigilancia"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE"/>
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

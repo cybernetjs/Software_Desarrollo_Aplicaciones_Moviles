@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../controladores/controlador_analisis.dart';
+import '../controladores/controlador_vigilancia.dart';
 import '../modelos/nivel_riesgo.dart';
 import '../tema/colores.dart';
 import '../tema/tema_aplicacion.dart';
 import '../widgets/encabezado_pantalla.dart';
 import '../widgets/escudo_estado.dart';
 import '../widgets/tarjeta_informacion.dart';
+import '../widgets/tarjeta_modulo.dart';
+import '../widgets/tarjeta_vigilancia.dart';
 
 typedef _DescripcionEstado = ({
   Color color,
@@ -19,11 +22,17 @@ class PantallaInicio extends StatelessWidget {
   const PantallaInicio({
     super.key,
     required this.controlador,
+    required this.vigilancia,
     required this.alVerResultados,
+    required this.alAbrirArchivos,
+    required this.alRevisarNuevas,
   });
 
   final ControladorAnalisis controlador;
+  final ControladorVigilancia vigilancia;
   final VoidCallback alVerResultados;
+  final VoidCallback alAbrirArchivos;
+  final VoidCallback alRevisarNuevas;
 
   _DescripcionEstado _describirEstado() {
     switch (controlador.estado) {
@@ -98,7 +107,7 @@ class PantallaInicio extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: controlador,
+      listenable: Listenable.merge([controlador, vigilancia]),
       builder: (context, _) {
         final estado = _describirEstado();
         final analizando = controlador.estado == EstadoAnalisis.analizando;
@@ -174,20 +183,27 @@ class PantallaInicio extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            const Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            TarjetaVigilancia(
+              controlador: vigilancia,
+              alRevisar: alRevisarNuevas,
+            ),
+            const SizedBox(height: 12),
+            Row(
               children: [
                 Expanded(
-                  child: TarjetaInformacion(
+                  child: TarjetaModulo(
+                    icono: Icons.folder_open,
                     titulo: 'Archivos',
-                    filas: [FilaInformacion('Estado', 'Pendiente')],
+                    descripcion: 'Escáner de APK',
+                    alPulsar: alAbrirArchivos,
                   ),
                 ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: TarjetaInformacion(
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: TarjetaModulo(
+                    icono: Icons.public,
                     titulo: 'Navegación',
-                    filas: [FilaInformacion('Estado', 'Pendiente')],
+                    descripcion: 'Próximamente',
                   ),
                 ),
               ],

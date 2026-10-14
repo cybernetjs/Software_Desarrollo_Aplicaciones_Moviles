@@ -12,6 +12,8 @@ typedef _ReglaPermiso = ({
   String motivo,
 });
 
+typedef EvaluacionRiesgo = ({int puntos, List<MotivoRiesgo> motivos});
+
 class AnalizadorRiesgo {
   static const int _umbralMedio = 5;
   static const int _umbralAlto = 8;
@@ -67,6 +69,40 @@ class AnalizadorRiesgo {
   ];
 
   ResultadoAnalisis analizar(AplicacionInstalada aplicacion) {
+    final evaluacion = evaluarCaracteristicas(
+      permisos: aplicacion.permisos,
+      usaAccesibilidad: aplicacion.usaAccesibilidad,
+      esAdministrador: aplicacion.esAdministrador,
+      tieneIcono: aplicacion.tieneIcono,
+    );
+
+    var puntos = evaluacion.puntos;
+    final motivos = [...evaluacion.motivos];
+
+    if (!_tiendasConfiables.contains(aplicacion.origen)) {
+      puntos += 1;
+      motivos.add(
+        const MotivoRiesgo(
+          Icons.storefront,
+          'Fue instalada fuera de una tienda confiable',
+        ),
+      );
+    }
+
+    return ResultadoAnalisis(
+      aplicacion: aplicacion,
+      puntos: puntos,
+      nivel: calcularNivel(puntos),
+      motivos: motivos,
+    );
+  }
+
+  EvaluacionRiesgo evaluarCaracteristicas({
+    required List<String> permisos,
+    required bool usaAccesibilidad,
+    required bool esAdministrador,
+    required bool tieneIcono,
+  }) {
     var puntos = 0;
     final motivos = <MotivoRiesgo>[];
 
@@ -75,21 +111,21 @@ class AnalizadorRiesgo {
       motivos.add(MotivoRiesgo(icono, descripcion));
     }
 
-    if (aplicacion.usaAccesibilidad) {
+    if (usaAccesibilidad) {
       sumar(
         3,
         Icons.accessibility_new,
         'Puede leer y controlar la pantalla mediante accesibilidad',
       );
     }
-    if (aplicacion.esAdministrador) {
+    if (esAdministrador) {
       sumar(
         3,
         Icons.admin_panel_settings,
         'Puede actuar como administrador del dispositivo',
       );
     }
-    if (!aplicacion.tieneIcono) {
+    if (!tieneIcono) {
       sumar(
         3,
         Icons.visibility_off,
@@ -97,27 +133,15 @@ class AnalizadorRiesgo {
       );
     }
     for (final regla in _reglasPermisos) {
-      if (aplicacion.permisos.any(regla.permisos.contains)) {
+      if (permisos.any(regla.permisos.contains)) {
         sumar(regla.puntos, regla.icono, regla.motivo);
       }
     }
-    if (!_tiendasConfiables.contains(aplicacion.origen)) {
-      sumar(
-        1,
-        Icons.storefront,
-        'Fue instalada fuera de una tienda confiable',
-      );
-    }
 
-    return ResultadoAnalisis(
-      aplicacion: aplicacion,
-      puntos: puntos,
-      nivel: _calcularNivel(puntos),
-      motivos: motivos,
-    );
+    return (puntos: puntos, motivos: motivos);
   }
 
-  NivelRiesgo _calcularNivel(int puntos) {
+  NivelRiesgo calcularNivel(int puntos) {
     if (puntos >= _umbralAlto) return NivelRiesgo.alto;
     if (puntos >= _umbralMedio) return NivelRiesgo.medio;
     return NivelRiesgo.bajo;

@@ -46,6 +46,8 @@ class MainActivity : FlutterActivity() {
         registrarCanalDispositivo(flutterEngine)
         registrarCanalWifi(flutterEngine)
         gestorFirewall.registrar(flutterEngine)
+        flutterEngine.plugins.add(PluginApk())
+        flutterEngine.plugins.add(PluginVigilancia())
     }
 
     @Suppress("DEPRECATION")
