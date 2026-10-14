@@ -4,6 +4,7 @@ import '../controladores/controlador_analisis.dart';
 import '../controladores/controlador_apk.dart';
 import '../controladores/controlador_dispositivo.dart';
 import '../controladores/controlador_firewall.dart';
+import '../controladores/controlador_stalkerware.dart';
 import '../controladores/controlador_vigilancia.dart';
 import '../controladores/controlador_wifi.dart';
 import 'pantalla_aplicaciones.dart';
@@ -11,6 +12,7 @@ import 'pantalla_dispositivo.dart';
 import 'pantalla_escaner_apk.dart';
 import 'pantalla_firewall.dart';
 import 'pantalla_inicio.dart';
+import 'pantalla_stalkerware.dart';
 import 'pantalla_wifi.dart';
 
 class PantallaPrincipal extends StatefulWidget {
@@ -28,6 +30,7 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal>
   late final ControladorFirewall _controladorFirewall;
   late final ControladorApk _controladorApk;
   late final ControladorVigilancia _controladorVigilancia;
+  late final ControladorStalkerware _controladorStalkerware;
   int _indiceActual = 0;
 
   @override
@@ -40,6 +43,7 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal>
     _controladorFirewall = ControladorFirewall()..cargar();
     _controladorApk = ControladorApk();
     _controladorVigilancia = ControladorVigilancia()..cargar();
+    _controladorStalkerware = ControladorStalkerware();
   }
 
   @override
@@ -51,6 +55,7 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal>
     _controladorFirewall.dispose();
     _controladorApk.dispose();
     _controladorVigilancia.dispose();
+    _controladorStalkerware.dispose();
     super.dispose();
   }
 
@@ -69,6 +74,16 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal>
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => PantallaEscanerApk(controlador: _controladorApk),
+      ),
+    );
+  }
+
+  void _abrirStalkerware() {
+    _controladorStalkerware.cargarLista();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            PantallaStalkerware(controlador: _controladorStalkerware),
       ),
     );
   }
@@ -95,6 +110,7 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal>
               vigilancia: _controladorVigilancia,
               alVerResultados: _irAAplicaciones,
               alAbrirArchivos: _abrirEscanerApk,
+              alAbrirStalkerware: _abrirStalkerware,
               alRevisarNuevas: _revisarNuevas,
             ),
             PantallaAplicaciones(controlador: _controladorAnalisis),

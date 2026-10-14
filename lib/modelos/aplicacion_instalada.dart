@@ -8,6 +8,8 @@ class AplicacionInstalada {
     required this.tieneIcono,
     required this.usaAccesibilidad,
     required this.esAdministrador,
+    required this.firmasSha1,
+    required this.firmasSha256,
   });
 
   final String nombre;
@@ -18,6 +20,8 @@ class AplicacionInstalada {
   final bool tieneIcono;
   final bool usaAccesibilidad;
   final bool esAdministrador;
+  final List<String> firmasSha1;
+  final List<String> firmasSha256;
 
   factory AplicacionInstalada.desdeMapa(Map<dynamic, dynamic> mapa) {
     return AplicacionInstalada(
@@ -29,6 +33,8 @@ class AplicacionInstalada {
       tieneIcono: mapa['tieneIcono'] as bool,
       usaAccesibilidad: mapa['usaAccesibilidad'] as bool,
       esAdministrador: mapa['esAdministrador'] as bool,
+      firmasSha1: List<String>.from(mapa['firmasSha1'] as List),
+      firmasSha256: List<String>.from(mapa['firmasSha256'] as List),
     );
   }
 }

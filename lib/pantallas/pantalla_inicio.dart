@@ -25,6 +25,7 @@ class PantallaInicio extends StatelessWidget {
     required this.vigilancia,
     required this.alVerResultados,
     required this.alAbrirArchivos,
+    required this.alAbrirStalkerware,
     required this.alRevisarNuevas,
   });
 
@@ -32,6 +33,7 @@ class PantallaInicio extends StatelessWidget {
   final ControladorVigilancia vigilancia;
   final VoidCallback alVerResultados;
   final VoidCallback alAbrirArchivos;
+  final VoidCallback alAbrirStalkerware;
   final VoidCallback alRevisarNuevas;
 
   _DescripcionEstado _describirEstado() {
@@ -199,11 +201,12 @@ class PantallaInicio extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: TarjetaModulo(
-                    icono: Icons.public,
-                    titulo: 'Navegación',
-                    descripcion: 'Próximamente',
+                    icono: Icons.visibility_off,
+                    titulo: 'Stalkerware',
+                    descripcion: 'Detector de apps espía',
+                    alPulsar: alAbrirStalkerware,
                   ),
                 ),
               ],

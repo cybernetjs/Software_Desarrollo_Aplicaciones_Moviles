@@ -182,7 +182,8 @@ class MainActivity : FlutterActivity() {
     private fun obtenerAplicaciones(): List<Map<String, Any?>> {
         val banderas = PackageManager.GET_PERMISSIONS or
             PackageManager.GET_SERVICES or
-            PackageManager.GET_RECEIVERS
+            PackageManager.GET_RECEIVERS or
+            HuellasFirma.bandera()
         val paquetes = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             packageManager.getInstalledPackages(
                 PackageManager.PackageInfoFlags.of(banderas.toLong())
@@ -200,6 +201,7 @@ class MainActivity : FlutterActivity() {
                 (ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0
         val nombre = aplicacion?.let { packageManager.getApplicationLabel(it).toString() }
             ?: informacion.packageName
+        val huellas = HuellasFirma.calcular(informacion)
 
         return mapOf(
             "nombre" to nombre,
@@ -211,7 +213,9 @@ class MainActivity : FlutterActivity() {
             "usaAccesibilidad" to
                 (informacion.services?.any { it.permission == permisoAccesibilidad } == true),
             "esAdministrador" to
-                (informacion.receivers?.any { it.permission == permisoAdministrador } == true)
+                (informacion.receivers?.any { it.permission == permisoAdministrador } == true),
+            "firmasSha1" to huellas.first,
+            "firmasSha256" to huellas.second
         )
     }
 
