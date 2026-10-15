@@ -48,6 +48,7 @@ class MainActivity : FlutterActivity() {
         gestorFirewall.registrar(flutterEngine)
         flutterEngine.plugins.add(PluginApk())
         flutterEngine.plugins.add(PluginVigilancia())
+        flutterEngine.plugins.add(PluginDescargas())
     }
 
     @Suppress("DEPRECATION")

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../controladores/controlador_analisis.dart';
+import '../controladores/controlador_completo.dart';
 import '../controladores/controlador_vigilancia.dart';
 import '../modelos/nivel_riesgo.dart';
 import '../tema/colores.dart';
@@ -21,43 +22,46 @@ typedef _DescripcionEstado = ({
 class PantallaInicio extends StatelessWidget {
   const PantallaInicio({
     super.key,
-    required this.controlador,
+    required this.completo,
     required this.vigilancia,
     required this.alVerResultados,
     required this.alAbrirArchivos,
     required this.alAbrirStalkerware,
+    required this.alAbrirDescargas,
     required this.alRevisarNuevas,
   });
 
-  final ControladorAnalisis controlador;
+  final ControladorCompleto completo;
   final ControladorVigilancia vigilancia;
   final VoidCallback alVerResultados;
   final VoidCallback alAbrirArchivos;
   final VoidCallback alAbrirStalkerware;
+  final VoidCallback alAbrirDescargas;
   final VoidCallback alRevisarNuevas;
 
   _DescripcionEstado _describirEstado() {
-    switch (controlador.estado) {
+    switch (completo.estado) {
       case EstadoAnalisis.inactivo:
         return (
           color: Colores.primarioClaro,
           icono: Icons.shield_outlined,
           titulo: 'Listo para analizar',
-          subtitulo: 'Revisa las aplicaciones instaladas en tu dispositivo',
+          subtitulo: 'Revisa tus apps, el stalkerware y la seguridad del equipo',
         );
       case EstadoAnalisis.analizando:
         return (
           color: Colores.primarioClaro,
           icono: Icons.shield_outlined,
           titulo: 'Analizando',
-          subtitulo: 'Revisando permisos y comportamiento de las aplicaciones',
+          subtitulo:
+              'Paso ${completo.etapa + 1} de ${ControladorCompleto.etapas.length}: ${ControladorCompleto.etapas[completo.etapa]}',
         );
       case EstadoAnalisis.error:
         return (
           color: Colores.advertencia,
           icono: Icons.error_outline,
           titulo: 'No se pudo analizar',
-          subtitulo: controlador.mensajeError ?? 'Intenta nuevamente',
+          subtitulo: completo.mensajeError ?? 'Intenta nuevamente',
         );
       case EstadoAnalisis.completado:
         return _describirResultado();
@@ -65,28 +69,33 @@ class PantallaInicio extends StatelessWidget {
   }
 
   _DescripcionEstado _describirResultado() {
-    final porRevisar = controlador.totalPorRevisar;
-    switch (controlador.nivelGeneral) {
+    final total = completo.totalPorRevisar;
+    final atencion = total == 1
+        ? '1 elemento requiere tu atención'
+        : '$total elementos requieren tu atención';
+
+    switch (completo.nivelGeneral) {
       case NivelRiesgo.bajo:
         return (
           color: Colores.seguro,
           icono: Icons.verified_user,
           titulo: 'Sin riesgos detectados',
-          subtitulo: 'Se analizaron ${controlador.resultados.length} aplicaciones',
+          subtitulo:
+              'Se revisaron ${completo.totalAplicacionesRevisadas} apps, el stalkerware y el equipo',
         );
       case NivelRiesgo.medio:
         return (
           color: Colores.advertencia,
           icono: Icons.warning_amber_rounded,
-          titulo: 'Hay aplicaciones por revisar',
-          subtitulo: '$porRevisar aplicaciones requieren tu atención',
+          titulo: 'Hay elementos por revisar',
+          subtitulo: atencion,
         );
       case NivelRiesgo.alto:
         return (
           color: Colores.peligro,
           icono: Icons.gpp_bad,
           titulo: 'Se detectaron riesgos altos',
-          subtitulo: '$porRevisar aplicaciones requieren tu atención',
+          subtitulo: atencion,
         );
     }
   }
@@ -100,20 +109,31 @@ class PantallaInicio extends StatelessWidget {
     return '$dia/$mes $hora:$minuto';
   }
 
+  String _describirConteo(
+    int? valor, {
+    required String vacio,
+    required String singular,
+    required String plural,
+  }) {
+    if (valor == null) return 'Sin datos';
+    if (valor == 0) return vacio;
+    return valor == 1 ? '1 $singular' : '$valor $plural';
+  }
+
   String _textoBoton(bool analizando, bool completado) {
     if (analizando) return 'Analizando...';
     if (completado) return 'Analizar de nuevo';
-    return 'Analizar ahora';
+    return 'Análisis completo';
   }
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([controlador, vigilancia]),
+      listenable: Listenable.merge([completo, vigilancia]),
       builder: (context, _) {
         final estado = _describirEstado();
-        final analizando = controlador.estado == EstadoAnalisis.analizando;
-        final completado = controlador.estado == EstadoAnalisis.completado;
+        final analizando = completo.estado == EstadoAnalisis.analizando;
+        final completado = completo.estado == EstadoAnalisis.completado;
 
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
@@ -158,7 +178,7 @@ class PantallaInicio extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: analizando ? null : controlador.analizar,
+              onPressed: analizando ? null : completo.ejecutar,
               child: Text(_textoBoton(analizando, completado)),
             ),
             if (completado)
@@ -172,15 +192,34 @@ class PantallaInicio extends StatelessWidget {
               filas: [
                 FilaInformacion(
                   'Última revisión',
-                  _formatearFecha(controlador.ultimaRevision),
+                  _formatearFecha(completo.ultimaRevision),
                 ),
                 FilaInformacion(
-                  'Aplicaciones analizadas',
-                  '${controlador.resultados.length}',
+                  'Aplicaciones',
+                  _describirConteo(
+                    completo.aplicacionesPorRevisar,
+                    vacio: 'Sin riesgos',
+                    singular: 'por revisar',
+                    plural: 'por revisar',
+                  ),
                 ),
                 FilaInformacion(
-                  'Riesgos detectados',
-                  '${controlador.totalPorRevisar}',
+                  'Stalkerware',
+                  _describirConteo(
+                    completo.stalkerwareSospechosas,
+                    vacio: 'Sin señales',
+                    singular: 'sospechosa',
+                    plural: 'sospechosas',
+                  ),
+                ),
+                FilaInformacion(
+                  'Dispositivo',
+                  _describirConteo(
+                    completo.alertasDispositivo,
+                    vacio: 'Sin alertas',
+                    singular: 'alerta',
+                    plural: 'alertas',
+                  ),
                 ),
               ],
             ),
@@ -209,6 +248,21 @@ class PantallaInicio extends StatelessWidget {
                     alPulsar: alAbrirStalkerware,
                   ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TarjetaModulo(
+                    icono: Icons.download,
+                    titulo: 'Descargas',
+                    descripcion: 'Revisar APK bajados',
+                    alPulsar: alAbrirDescargas,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(child: SizedBox()),
               ],
             ),
           ],

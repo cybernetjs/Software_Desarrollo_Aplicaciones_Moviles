@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../controladores/controlador_analisis.dart';
 import '../controladores/controlador_apk.dart';
+import '../controladores/controlador_completo.dart';
+import '../controladores/controlador_descargas.dart';
 import '../controladores/controlador_dispositivo.dart';
 import '../controladores/controlador_firewall.dart';
 import '../controladores/controlador_stalkerware.dart';
 import '../controladores/controlador_vigilancia.dart';
 import '../controladores/controlador_wifi.dart';
 import 'pantalla_aplicaciones.dart';
+import 'pantalla_descargas.dart';
 import 'pantalla_dispositivo.dart';
 import 'pantalla_escaner_apk.dart';
 import 'pantalla_firewall.dart';
@@ -31,6 +34,8 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal>
   late final ControladorApk _controladorApk;
   late final ControladorVigilancia _controladorVigilancia;
   late final ControladorStalkerware _controladorStalkerware;
+  late final ControladorDescargas _controladorDescargas;
+  late final ControladorCompleto _controladorCompleto;
   int _indiceActual = 0;
 
   @override
@@ -44,11 +49,18 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal>
     _controladorApk = ControladorApk();
     _controladorVigilancia = ControladorVigilancia()..cargar();
     _controladorStalkerware = ControladorStalkerware();
+    _controladorDescargas = ControladorDescargas();
+    _controladorCompleto = ControladorCompleto(
+      analisis: _controladorAnalisis,
+      stalkerware: _controladorStalkerware,
+      dispositivo: _controladorDispositivo,
+    );
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _controladorCompleto.dispose();
     _controladorAnalisis.dispose();
     _controladorDispositivo.dispose();
     _controladorWifi.dispose();
@@ -56,6 +68,7 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal>
     _controladorApk.dispose();
     _controladorVigilancia.dispose();
     _controladorStalkerware.dispose();
+    _controladorDescargas.dispose();
     super.dispose();
   }
 
@@ -88,9 +101,17 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal>
     );
   }
 
+  void _abrirDescargas() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PantallaDescargas(controlador: _controladorDescargas),
+      ),
+    );
+  }
+
   Future<void> _revisarNuevas() async {
-    await _controladorAnalisis.analizar();
-    if (_controladorAnalisis.estado != EstadoAnalisis.completado) return;
+    await _controladorCompleto.ejecutar();
+    if (_controladorCompleto.estado != EstadoAnalisis.completado) return;
 
     await _controladorVigilancia.marcarRevisadas();
     if (!mounted) return;
@@ -106,11 +127,12 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal>
           index: _indiceActual,
           children: [
             PantallaInicio(
-              controlador: _controladorAnalisis,
+              completo: _controladorCompleto,
               vigilancia: _controladorVigilancia,
               alVerResultados: _irAAplicaciones,
               alAbrirArchivos: _abrirEscanerApk,
               alAbrirStalkerware: _abrirStalkerware,
+              alAbrirDescargas: _abrirDescargas,
               alRevisarNuevas: _revisarNuevas,
             ),
             PantallaAplicaciones(controlador: _controladorAnalisis),
