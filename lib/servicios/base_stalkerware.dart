@@ -3,6 +3,9 @@ import '../modelos/indicador_stalkerware.dart';
 class BaseStalkerware {
   BaseStalkerware(List<IndicadorStalkerware> indicadores)
       : totalIndicadores = indicadores.length,
+        dominiosC2 = {
+          for (final indicador in indicadores) ...indicador.dominios,
+        },
         _porPaquete = {
           for (final indicador in indicadores)
             for (final paquete in indicador.paquetes) paquete: indicador,
@@ -14,6 +17,7 @@ class BaseStalkerware {
         };
 
   final int totalIndicadores;
+  final Set<String> dominiosC2;
   final Map<String, IndicadorStalkerware> _porPaquete;
   final Map<String, IndicadorStalkerware> _porCertificado;
 

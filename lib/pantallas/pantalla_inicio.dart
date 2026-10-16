@@ -28,6 +28,7 @@ class PantallaInicio extends StatelessWidget {
     required this.alAbrirArchivos,
     required this.alAbrirStalkerware,
     required this.alAbrirDescargas,
+    required this.alAbrirFiltroDns,
     required this.alRevisarNuevas,
   });
 
@@ -37,6 +38,7 @@ class PantallaInicio extends StatelessWidget {
   final VoidCallback alAbrirArchivos;
   final VoidCallback alAbrirStalkerware;
   final VoidCallback alAbrirDescargas;
+  final VoidCallback alAbrirFiltroDns;
   final VoidCallback alRevisarNuevas;
 
   _DescripcionEstado _describirEstado() {
@@ -262,7 +264,14 @@ class PantallaInicio extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(child: SizedBox()),
+                  Expanded(
+                  child: TarjetaModulo(
+                    icono: Icons.dns,
+                    titulo: 'Filtro DNS',
+                    descripcion: 'Dominios por app',
+                    alPulsar: alAbrirFiltroDns,
+                  ),
+                ),
               ],
             ),
           ],

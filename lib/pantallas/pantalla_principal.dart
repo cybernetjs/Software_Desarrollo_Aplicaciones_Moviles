@@ -5,6 +5,7 @@ import '../controladores/controlador_apk.dart';
 import '../controladores/controlador_completo.dart';
 import '../controladores/controlador_descargas.dart';
 import '../controladores/controlador_dispositivo.dart';
+import '../controladores/controlador_filtro_dns.dart';
 import '../controladores/controlador_firewall.dart';
 import '../controladores/controlador_stalkerware.dart';
 import '../controladores/controlador_vigilancia.dart';
@@ -13,6 +14,7 @@ import 'pantalla_aplicaciones.dart';
 import 'pantalla_descargas.dart';
 import 'pantalla_dispositivo.dart';
 import 'pantalla_escaner_apk.dart';
+import 'pantalla_filtro_dns.dart';
 import 'pantalla_firewall.dart';
 import 'pantalla_inicio.dart';
 import 'pantalla_stalkerware.dart';
@@ -35,6 +37,7 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal>
   late final ControladorVigilancia _controladorVigilancia;
   late final ControladorStalkerware _controladorStalkerware;
   late final ControladorDescargas _controladorDescargas;
+  late final ControladorFiltroDns _controladorFiltroDns;
   late final ControladorCompleto _controladorCompleto;
   int _indiceActual = 0;
 
@@ -50,6 +53,9 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal>
     _controladorVigilancia = ControladorVigilancia()..cargar();
     _controladorStalkerware = ControladorStalkerware();
     _controladorDescargas = ControladorDescargas();
+    _controladorFiltroDns = ControladorFiltroDns(
+      alCambiarModo: _controladorFirewall.sincronizarEstado,
+    );
     _controladorCompleto = ControladorCompleto(
       analisis: _controladorAnalisis,
       stalkerware: _controladorStalkerware,
@@ -69,6 +75,7 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal>
     _controladorVigilancia.dispose();
     _controladorStalkerware.dispose();
     _controladorDescargas.dispose();
+    _controladorFiltroDns.dispose();
     super.dispose();
   }
 
@@ -109,6 +116,14 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal>
     );
   }
 
+  void _abrirFiltroDns() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PantallaFiltroDns(controlador: _controladorFiltroDns),
+      ),
+    );
+  }
+
   Future<void> _revisarNuevas() async {
     await _controladorCompleto.ejecutar();
     if (_controladorCompleto.estado != EstadoAnalisis.completado) return;
@@ -133,6 +148,7 @@ class _EstadoPantallaPrincipal extends State<PantallaPrincipal>
               alAbrirArchivos: _abrirEscanerApk,
               alAbrirStalkerware: _abrirStalkerware,
               alAbrirDescargas: _abrirDescargas,
+              alAbrirFiltroDns: _abrirFiltroDns,
               alRevisarNuevas: _revisarNuevas,
             ),
             PantallaAplicaciones(controlador: _controladorAnalisis),

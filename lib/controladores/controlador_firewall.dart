@@ -75,6 +75,19 @@ class ControladorFirewall extends ChangeNotifier {
     notifyListeners();
   }
 
+    Future<void> sincronizarEstado() async {
+    try {
+      final estadoNativo = await _servicioFirewall.obtenerEstado();
+      _activo = estadoNativo.activo;
+      _bloqueadas = {...estadoNativo.bloqueadas};
+      notifyListeners();
+    } on MissingPluginException {
+      return;
+    } on PlatformException {
+      return;
+    }
+  }
+
   Future<void> alternarFirewall(bool encender) async {
     if (_ocupado) return;
 

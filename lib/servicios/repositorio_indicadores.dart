@@ -89,10 +89,19 @@ class RepositorioIndicadores {
       tipo: '${entrada['type'] ?? 'stalkerware'}'.toLowerCase(),
       paquetes: _extraerLista(entrada['packages']).toSet(),
       certificados: _extraerLista(entrada['certificates'])
-          .map(_normalizar)
+          .map(_normalizarHuella)
           .where((huella) => huella.isNotEmpty)
           .toSet(),
+      dominios: _extraerLista(_buscarDominiosC2(entrada))
+          .map(_normalizarDominio)
+          .where((dominio) => dominio.isNotEmpty)
+          .toSet(),
     );
+  }
+
+  dynamic _buscarDominiosC2(YamlMap entrada) {
+    final c2 = entrada['c2'];
+    return c2 is YamlMap ? c2['domains'] : null;
   }
 
   Iterable<String> _extraerLista(dynamic valor) {
@@ -102,7 +111,11 @@ class RepositorioIndicadores {
         .where((texto) => texto.isNotEmpty);
   }
 
-  String _normalizar(String huella) {
+  String _normalizarHuella(String huella) {
     return huella.replaceAll(RegExp(r'[^0-9a-fA-F]'), '').toLowerCase();
+  }
+
+  String _normalizarDominio(String dominio) {
+    return dominio.trim().toLowerCase();
   }
 }

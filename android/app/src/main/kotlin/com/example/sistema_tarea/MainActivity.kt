@@ -49,6 +49,7 @@ class MainActivity : FlutterActivity() {
         flutterEngine.plugins.add(PluginApk())
         flutterEngine.plugins.add(PluginVigilancia())
         flutterEngine.plugins.add(PluginDescargas())
+        flutterEngine.plugins.add(PluginFiltroDns())
     }
 
     @Suppress("DEPRECATION")
